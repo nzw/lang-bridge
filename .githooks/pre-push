@@ -1,0 +1,68 @@
+#!/bin/bash
+# pre-push フック: lang-bridge リモートへの push 時にセンシティブファイルをブロック
+#
+# このフックは .githooks/pre-push に置き、以下で有効化する:
+#   git config core.hooksPath .githooks
+
+REMOTE="$1"
+
+# lang-bridge 以外は素通り
+if [ "$REMOTE" != "lang-bridge" ]; then
+  exit 0
+fi
+
+echo "🔒 [pre-push] lang-bridge への push — センシティブファイルをスキャン中..."
+
+# push されるコミット範囲を読み取る
+# stdin: <local-ref> <local-sha> <remote-ref> <remote-sha>
+FAILED=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # 削除操作はスキップ
+  if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+    continue
+  fi
+
+  # リモートに存在しない場合は全コミットをチェック
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    RANGE="$local_sha"
+    FILE_LIST=$(git ls-tree -r "$RANGE" --name-only 2>/dev/null)
+  else
+    RANGE="$remote_sha..$local_sha"
+    FILE_LIST=$(git diff --name-only "$remote_sha" "$local_sha" 2>/dev/null)
+  fi
+
+  # センシティブファイルの存在チェック
+  SENSITIVE_PATTERNS=(
+    "lib/firebase_options.dart"
+    "android/app/google-services.json"
+    "android/app/debug.keystore"
+    "ios/Runner/GoogleService-Info.plist"
+    ".env.dart-defines"
+  )
+
+  for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+    if echo "$FILE_LIST" | grep -qF "$pattern"; then
+      echo "   ❌ BLOCKED: $pattern が含まれています (コミット範囲: $RANGE)"
+      FAILED=1
+    fi
+  done
+
+  # APIキーパターンのスキャン
+  if git diff "$remote_sha" "$local_sha" 2>/dev/null | grep -qE 'AIzaSy[A-Za-z0-9_-]{33}'; then
+    echo "   ❌ BLOCKED: Google API キーのパターンが検出されました (AIzaSy...)"
+    FAILED=1
+  fi
+
+done
+
+if [ $FAILED -ne 0 ]; then
+  echo ""
+  echo "❌ センシティブデータが検出されました。"
+  echo "   lang-bridge への push は tool/sync-oss.sh を使用してください:"
+  echo "   bash tool/sync-oss.sh"
+  exit 1
+fi
+
+echo "   ✅ センシティブファイルなし — push を続行します"
+exit 0

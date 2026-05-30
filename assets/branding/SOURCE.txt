@@ -1,0 +1,11 @@
+Sign in with Google — branding assets
+=======================================
+
+The vector paths in google_g_mark.svg are taken from Google’s pre-approved
+asset pack (file: signin-assets/iOS/png@1x/light/ios_light_sq_na.svg).
+
+Download the full pack (PNG/SVG buttons, all themes):
+https://developers.google.com/static/identity/images/signin-assets.zip
+
+Guidelines:
+https://developers.google.com/identity/branding-guidelines

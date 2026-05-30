@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Google ログイン（Credential Manager）に必須の「ウェブアプリケーション」OAuth 2.0 クライアント ID。
+      Google Cloud コンソール → API とサービス → 認証情報 → OAuth クライアント ID を作成（種類: ウェブアプリケーション）
+      表示された「クライアント ID」全体（…apps.googleusercontent.com）を下の 1 行に貼り付けてください。
+
+      Firebase の google-services.json に oauth_client（client_type: 3）が含まれると、ビルド時に
+      同じ名前のリソースが自動生成される場合があります。そのときはこのファイルの該当行を削除しても構いません。
+    -->
+</resources>
